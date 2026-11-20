@@ -8,6 +8,7 @@ use LukasHron\SentinelProbe\Rules\Exposure\SensitiveFilesRule;
 use LukasHron\SentinelProbe\Rules\Headers\ClickjackingRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentSecurityPolicyRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentTypeOptionsRule;
+use LukasHron\SentinelProbe\Rules\Headers\CorsRule;
 use LukasHron\SentinelProbe\Rules\Headers\CspNonceRule;
 use LukasHron\SentinelProbe\Rules\Headers\InformationDisclosureRule;
 use LukasHron\SentinelProbe\Rules\Headers\PermissionsPolicyRule;
@@ -45,6 +46,7 @@ final readonly class SentinelProbe
             new ContentSecurityPolicyRule(),
             new CspNonceRule($this->httpClient),
             new ClickjackingRule(),
+            new CorsRule($this->httpClient),
             new ContentTypeOptionsRule(),
             new ReferrerPolicyRule(),
             new PermissionsPolicyRule(),

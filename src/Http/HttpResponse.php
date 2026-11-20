@@ -2,6 +2,8 @@
 
 namespace LukasHron\SentinelProbe\Http;
 
+use DOMDocument;
+use DOMXPath;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
@@ -155,6 +157,21 @@ final readonly class HttpResponse implements HttpResponseInterface
     public function contentMatches(string $pattern): bool
     {
         return preg_match($pattern, $this->content) === 1;
+    }
+
+    public function xpath(): ?DOMXPath
+    {
+        if (trim($this->content) === '') {
+            return null;
+        }
+
+        $document = new DOMDocument();
+        $previous = libxml_use_internal_errors(true);
+        $loaded = $document->loadHTML('<?xml encoding="UTF-8">' . $this->content, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        return $loaded ? new DOMXPath($document) : null;
     }
 
     # ====================================

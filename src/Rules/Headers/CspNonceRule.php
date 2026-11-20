@@ -2,7 +2,6 @@
 
 namespace LukasHron\SentinelProbe\Rules\Headers;
 
-use DOMDocument;
 use DOMElement;
 use DOMXPath;
 use LukasHron\SentinelProbe\Http\HttpResponse;
@@ -77,7 +76,7 @@ final readonly class CspNonceRule implements RuleInterface
             }
         }
 
-        $xpath = self::xpath($response->content());
+        $xpath = $response->xpath();
 
         if ($xpath !== null) {
             array_push($warnings, ...$this->checkElements($xpath, $directives, $nonces));
@@ -319,21 +318,6 @@ final readonly class CspNonceRule implements RuleInterface
         }
 
         return $hasNonceOrHash || !str_contains($lower, "'unsafe-inline'");
-    }
-
-    private static function xpath(string $html): ?DOMXPath
-    {
-        if (trim($html) === '') {
-            return null;
-        }
-
-        $document = new DOMDocument();
-        $previous = libxml_use_internal_errors(true);
-        $loaded = $document->loadHTML('<?xml encoding="UTF-8">' . $html, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previous);
-
-        return $loaded ? new DOMXPath($document) : null;
     }
 
     /**

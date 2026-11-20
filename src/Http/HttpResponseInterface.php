@@ -2,6 +2,8 @@
 
 namespace LukasHron\SentinelProbe\Http;
 
+use DOMXPath;
+
 interface HttpResponseInterface
 {
     # ====================================
@@ -76,6 +78,11 @@ interface HttpResponseInterface
     public function isHtml(): bool;
 
     public function contentMatches(string $pattern): bool;
+
+    /**
+     * Content parsed as HTML for XPath queries, null when the content is empty.
+     */
+    public function xpath(): ?DOMXPath;
 
     # ====================================
     #   Cookies

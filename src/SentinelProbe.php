@@ -15,6 +15,7 @@ use LukasHron\SentinelProbe\Rules\RuleStatus;
 use LukasHron\SentinelProbe\Rules\Session\SessionCookieRule;
 use LukasHron\SentinelProbe\Rules\Session\SessionIdInUrlRule;
 use LukasHron\SentinelProbe\Rules\Session\SessionStrictModeRule;
+use LukasHron\SentinelProbe\Rules\Transport\HttpsRedirectRule;
 use LukasHron\SentinelProbe\Rules\Transport\HttpsRule;
 use LukasHron\SentinelProbe\Rules\Transport\StrictTransportSecurityRule;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
@@ -35,6 +36,7 @@ final readonly class SentinelProbe
     {
         return [
             new HttpsRule(),
+            new HttpsRedirectRule($this->httpClient),
             new StrictTransportSecurityRule(),
             new ContentSecurityPolicyRule(),
             new ClickjackingRule(),

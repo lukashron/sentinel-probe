@@ -3,6 +3,7 @@
 namespace LukasHron\SentinelProbe;
 
 use LukasHron\SentinelProbe\Http\HttpResponse;
+use LukasHron\SentinelProbe\Rules\Content\SubresourceIntegrityRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DebugOutputRule;
 use LukasHron\SentinelProbe\Rules\Exposure\SensitiveFilesRule;
 use LukasHron\SentinelProbe\Rules\Headers\ClickjackingRule;
@@ -45,6 +46,7 @@ final readonly class SentinelProbe
             new HttpsRedirectRule($this->httpClient),
             new TlsCertificateRule(),
             new MixedContentRule(),
+            new SubresourceIntegrityRule(),
             new StrictTransportSecurityRule(),
             new ContentSecurityPolicyRule(),
             new CspNonceRule($this->httpClient),

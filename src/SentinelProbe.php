@@ -5,6 +5,7 @@ namespace LukasHron\SentinelProbe;
 use LukasHron\SentinelProbe\Http\HttpResponse;
 use LukasHron\SentinelProbe\Rules\Content\SubresourceIntegrityRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DebugOutputRule;
+use LukasHron\SentinelProbe\Rules\Exposure\DirectoryListingRule;
 use LukasHron\SentinelProbe\Rules\Exposure\SensitiveFilesRule;
 use LukasHron\SentinelProbe\Rules\Headers\ClickjackingRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentSecurityPolicyRule;
@@ -62,6 +63,7 @@ final readonly class SentinelProbe
             new SessionStrictModeRule($this->httpClient),
             new SensitiveFilesRule($this->httpClient),
             new DebugOutputRule($this->httpClient),
+            new DirectoryListingRule($this->httpClient),
         ];
     }
 

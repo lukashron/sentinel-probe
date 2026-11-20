@@ -7,6 +7,7 @@ use LukasHron\SentinelProbe\Rules\Content\SubresourceIntegrityRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DebugOutputRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DirectoryListingRule;
 use LukasHron\SentinelProbe\Rules\Exposure\SensitiveFilesRule;
+use LukasHron\SentinelProbe\Rules\Exposure\TraceMethodRule;
 use LukasHron\SentinelProbe\Rules\Headers\ClickjackingRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentSecurityPolicyRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentTypeOptionsRule;
@@ -66,6 +67,7 @@ final readonly class SentinelProbe
             new SensitiveFilesRule($this->httpClient),
             new DebugOutputRule($this->httpClient),
             new DirectoryListingRule($this->httpClient),
+            new TraceMethodRule($this->httpClient),
         ];
     }
 

@@ -18,6 +18,7 @@ use LukasHron\SentinelProbe\Rules\Headers\ReferrerPolicyRule;
 use LukasHron\SentinelProbe\Rules\RuleInterface;
 use LukasHron\SentinelProbe\Rules\RuleStatus;
 use LukasHron\SentinelProbe\Rules\Session\CookieFlagsRule;
+use LukasHron\SentinelProbe\Rules\Session\SessionCacheRule;
 use LukasHron\SentinelProbe\Rules\Session\SessionCookieRule;
 use LukasHron\SentinelProbe\Rules\Session\SessionIdInUrlRule;
 use LukasHron\SentinelProbe\Rules\Session\SessionStrictModeRule;
@@ -61,6 +62,7 @@ final readonly class SentinelProbe
             new CookieFlagsRule(),
             new SessionIdInUrlRule(),
             new SessionStrictModeRule($this->httpClient),
+            new SessionCacheRule(),
             new SensitiveFilesRule($this->httpClient),
             new DebugOutputRule($this->httpClient),
             new DirectoryListingRule($this->httpClient),

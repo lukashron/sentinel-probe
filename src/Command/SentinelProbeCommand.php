@@ -10,6 +10,7 @@ use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 #[AsCommand(name: 'sp:run', description: 'Run a security check against a target')]
 class SentinelProbeCommand extends Command
@@ -33,11 +34,18 @@ class SentinelProbeCommand extends Command
             return Command::FAILURE;
         }
 
+        try {
+            $results = $this->sentinelProbe->scan($baseUrl);
+        } catch (TransportExceptionInterface $e) {
+            $io->error(sprintf('Target is unreachable: %s', $e->getMessage()));
+            return Command::FAILURE;
+        }
+
         $failed = false;
 
-        foreach ($this->sentinelProbe->scan($baseUrl) as $result) {
+        foreach ($results as $status) {
 
-            $badge = match ($result->status) {
+            $badge = match ($status->status) {
                 RuleStatus::OK => '<fg=green>[OK]  </>',
                 RuleStatus::WARNING => '<fg=yellow>[WARN]</>',
                 RuleStatus::FAIL => '<fg=red>[FAIL]</>'
@@ -46,11 +54,11 @@ class SentinelProbeCommand extends Command
             $io->writeln(sprintf(
                 '%s <options=bold>%s</> %s',
                 $badge,
-                OutputFormatter::escape($result->rule),
-                OutputFormatter::escape($result->message)
+                OutputFormatter::escape($status->rule),
+                OutputFormatter::escape($status->message)
             ));
 
-            $failed = $failed || $result->status === RuleStatus::FAIL;
+            $failed = $failed || $status->status === RuleStatus::FAIL;
         }
 
         $io->newLine();

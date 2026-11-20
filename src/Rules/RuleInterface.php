@@ -2,9 +2,9 @@
 
 namespace LukasHron\SentinelProbe\Rules;
 
-use Symfony\Contracts\HttpClient\ResponseInterface;
+use LukasHron\SentinelProbe\Http\HttpResponseInterface;
 
 interface RuleInterface
 {
-    public function check(ResponseInterface $response): RuleStatus;
+    public function check(HttpResponseInterface $response): RuleStatus;
 }

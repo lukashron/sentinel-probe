@@ -3,6 +3,7 @@
 namespace LukasHron\SentinelProbe;
 
 use LukasHron\SentinelProbe\Http\HttpResponse;
+use LukasHron\SentinelProbe\Rules\Exposure\SensitiveFilesRule;
 use LukasHron\SentinelProbe\Rules\Headers\ClickjackingRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentSecurityPolicyRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentTypeOptionsRule;
@@ -44,6 +45,7 @@ final readonly class SentinelProbe
             new SessionCookieRule(),
             new SessionIdInUrlRule(),
             new SessionStrictModeRule($this->httpClient),
+            new SensitiveFilesRule($this->httpClient),
         ];
     }
 

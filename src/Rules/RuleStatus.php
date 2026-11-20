@@ -8,6 +8,9 @@ final readonly class RuleStatus
     public const string WARNING = 'warning';
     public const string FAIL = 'fail';
 
+    /**
+     * @param self::OK|self::WARNING|self::FAIL $status
+     */
     public function __construct(
         public string $rule,
         public string $status,

@@ -120,7 +120,12 @@ final readonly class SensitiveFilesRule implements RuleInterface
         $contents = [];
 
         foreach ($this->httpClient->stream($requests) as $request => $chunk) {
-            $path = (string)$request->getInfo('user_data');
+            $path = $request->getInfo('user_data');
+
+            if (!is_string($path)) {
+                $request->cancel();
+                continue;
+            }
 
             try {
                 if ($chunk->isFirst()) {

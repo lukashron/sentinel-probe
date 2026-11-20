@@ -22,7 +22,8 @@ final readonly class HttpResponse implements HttpResponseInterface
      */
     public function __construct(ResponseInterface $response)
     {
-        $this->url = (string)$response->getInfo('url');
+        $url = $response->getInfo('url');
+        $this->url = is_string($url) ? $url : '';
         $this->statusCode = $response->getStatusCode();
         $this->content = $response->getContent(false);
 
@@ -30,7 +31,7 @@ final readonly class HttpResponse implements HttpResponseInterface
 
         foreach ($response->getHeaders(false) as $name => $values) {
             $key = strtolower((string)$name);
-            $headers[$key] = [...($headers[$key] ?? []), ...array_values($values)];
+            $headers[$key] = [...($headers[$key] ?? []), ...$values];
         }
 
         $this->headers = $headers;

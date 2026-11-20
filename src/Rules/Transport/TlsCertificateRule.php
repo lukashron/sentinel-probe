@@ -54,27 +54,26 @@ final class TlsCertificateRule implements RuleInterface
             );
         }
 
-        $certificate = stream_context_get_params($stream)['options']['ssl']['peer_certificate'] ?? null;
+        $certificate = $this->peerCertificate($stream);
         $protocol = stream_get_meta_data($stream)['crypto']['protocol'] ?? 'unknown protocol';
         fclose($stream);
 
         $info = $certificate !== null ? openssl_x509_parse($certificate) : false;
 
-        if ($info === false || !isset($info['validTo_time_t'])) {
+        if ($info === false || !isset($info['validTo_time_t']) || !is_int($info['validTo_time_t'])) {
             return RuleStatus::warning(
                 rule: 'TLS certificate',
                 message: 'Could not read the server certificate',
             );
         }
 
-        $validTo = (int)$info['validTo_time_t'];
+        $validTo = $info['validTo_time_t'];
         $daysLeft = (int)floor(($validTo - time()) / 86400);
-        $issuer = $info['issuer']['O'] ?? $info['issuer']['CN'] ?? 'unknown issuer';
         $summary = sprintf(
             'valid until %s (%d days), issued by %s, %s',
             date('Y-m-d', $validTo),
             $daysLeft,
-            is_string($issuer) ? $issuer : implode(', ', (array)$issuer),
+            $this->issuer($info),
             $protocol,
         );
 
@@ -129,6 +128,45 @@ final class TlsCertificateRule implements RuleInterface
         fclose($stream);
 
         return true;
+    }
+
+    /**
+     * Returns the issuer organization, or its common name when the organization is missing.
+     * A field present more than once in the certificate is parsed as an array of values.
+     *
+     * @param array<mixed> $info result of openssl_x509_parse()
+     */
+    private function issuer(array $info): string
+    {
+        $issuer = $info['issuer'] ?? null;
+        $name = is_array($issuer) ? ($issuer['O'] ?? $issuer['CN'] ?? null) : null;
+
+        if (is_string($name)) {
+            return $name;
+        }
+
+        $names = [];
+
+        foreach (is_array($name) ? $name : [] as $value) {
+            if (is_string($value)) {
+                $names[] = $value;
+            }
+        }
+
+        return $names !== [] ? implode(', ', $names) : 'unknown issuer';
+    }
+
+    /**
+     * Returns the certificate captured by the capture_peer_cert context option.
+     *
+     * @param resource $stream
+     */
+    private function peerCertificate(mixed $stream): ?\OpenSSLCertificate
+    {
+        $ssl = stream_context_get_options($stream)['ssl'] ?? null;
+        $certificate = is_array($ssl) ? ($ssl['peer_certificate'] ?? null) : null;
+
+        return $certificate instanceof \OpenSSLCertificate ? $certificate : null;
     }
 
     /**

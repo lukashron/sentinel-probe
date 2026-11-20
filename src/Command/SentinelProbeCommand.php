@@ -27,7 +27,8 @@ class SentinelProbeCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $io->title('Security Tool');
 
-        $baseUrl = trim((string)$io->ask('Enter the URL of the target'));
+        $answer = $io->ask('Enter the URL of the target');
+        $baseUrl = is_string($answer) ? trim($answer) : '';
 
         if (filter_var($baseUrl, FILTER_VALIDATE_URL) === false || preg_match('~^https?://~i', $baseUrl) !== 1) {
             $io->error('Invalid URL, expected http(s)://...');

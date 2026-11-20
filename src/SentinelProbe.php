@@ -40,7 +40,7 @@ final readonly class SentinelProbe
     }
 
     /**
-     * @var RuleInterface[] $rules
+     * @return list<RuleInterface>
      */
     private function rules(): array
     {

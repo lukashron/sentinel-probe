@@ -3,7 +3,6 @@
 
 namespace LukasHron\SentinelProbe;
 
-use JetBrains\PhpStorm\NoReturn;
 use LukasHron\SentinelProbe\Command\SentinelProbeCommand;
 use Symfony\Component\Console\Application;
 use Symfony\Component\HttpClient\HttpClient;
@@ -39,7 +38,6 @@ final class App
     const string APP_NAME = 'Security Tool';
     const string APP_VERSION = '1.0.0';
 
-    #[NoReturn]
     public function boot(): void
     {
         $httpClient = HttpClient::create([
@@ -52,7 +50,10 @@ final class App
 
         $application = new Application(self::APP_NAME, self::APP_VERSION);
         $application->addCommand($command);
-        $application->setDefaultCommand($command->getName(), true);
+        $application->setDefaultCommand(
+            $command->getName() ?? throw new \LogicException('Command has no name.'),
+            true,
+        );
 
         exit($application->run());
     }

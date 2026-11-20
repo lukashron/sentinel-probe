@@ -10,8 +10,11 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 final readonly class HttpResponse implements HttpResponseInterface
 {
     private string $url;
+
     private int $statusCode;
+
     private string $content;
+
     /** @var array<string, list<string>> */
     private array $headers;
 
@@ -115,7 +118,7 @@ final readonly class HttpResponse implements HttpResponseInterface
     {
         $values = $this->headerValues($name);
 
-        return $values === [] ? null : implode(', ', array_map('trim', $values));
+        return $values === [] ? null : implode(', ', array_map(trim(...), $values));
     }
 
     public function headerContains(string $name, string $needle): bool
@@ -129,7 +132,7 @@ final readonly class HttpResponse implements HttpResponseInterface
     {
         return array_filter(
             $this->headers,
-            static fn(string $name) => preg_match($pattern, $name) === 1,
+            static fn(string $name): bool => preg_match($pattern, $name) === 1,
             ARRAY_FILTER_USE_KEY,
         );
     }
@@ -186,7 +189,7 @@ final readonly class HttpResponse implements HttpResponseInterface
         foreach ($this->headerValues('set-cookie') as $header) {
             $cookie = SetCookie::fromHeader($header);
 
-            if ($cookie !== null) {
+            if ($cookie instanceof SetCookie) {
                 $cookies[] = $cookie;
             }
         }
@@ -209,7 +212,7 @@ final readonly class HttpResponse implements HttpResponseInterface
     {
         return array_values(array_filter(
             $this->cookies(),
-            static fn(SetCookie $cookie) => $cookie->isSessionCookie() && !$cookie->isDeletion(),
+            static fn(SetCookie $cookie): bool => $cookie->isSessionCookie() && !$cookie->isDeletion(),
         ));
     }
 }

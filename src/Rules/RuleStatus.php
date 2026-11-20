@@ -5,7 +5,9 @@ namespace LukasHron\SentinelProbe\Rules;
 final readonly class RuleStatus
 {
     public const string OK = 'ok';
+
     public const string WARNING = 'warning';
+
     public const string FAIL = 'fail';
 
     /**

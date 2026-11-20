@@ -32,7 +32,7 @@ final class ReferrerPolicyRule implements RuleInterface
         }
 
         // with a comma-separated fallback list, the last value supported by the browser wins
-        $values = array_filter(array_map('trim', explode(',', strtolower($header))));
+        $values = array_filter(array_map(trim(...), explode(',', strtolower($header))));
         $policy = (string)end($values);
 
         return match ($policy) {

@@ -36,9 +36,10 @@ require $autoload;
 final class App
 {
     const string APP_NAME = 'Security Tool';
+
     const string APP_VERSION = '1.0.0';
 
-    public function boot(): void
+    public function boot(): never
     {
         $httpClient = HttpClient::create([
             'headers' => ['User-Agent' => self::APP_NAME . '/' . self::APP_VERSION],

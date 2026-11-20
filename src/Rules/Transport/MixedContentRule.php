@@ -54,15 +54,15 @@ final class MixedContentRule implements RuleInterface
 
         $xpath = $response->xpath();
 
-        if ($xpath === null) {
+        if (!$xpath instanceof \DOMXPath) {
             return RuleStatus::ok(
                 rule: 'Mixed content',
                 message: 'Page has no content to check',
             );
         }
 
-        $active = self::findInsecure($xpath, self::ACTIVE);
-        $passive = self::findInsecure($xpath, self::PASSIVE);
+        $active = $this->findInsecure($xpath, self::ACTIVE);
+        $passive = $this->findInsecure($xpath, self::PASSIVE);
 
         if ($active === [] && $passive === []) {
             return RuleStatus::ok(
@@ -76,20 +76,20 @@ final class MixedContentRule implements RuleInterface
         if ($policy !== null && array_key_exists('upgrade-insecure-requests', ContentSecurityPolicyRule::parse($policy))) {
             return RuleStatus::warning(
                 rule: 'Mixed content',
-                message: 'HTTP resources are upgraded by CSP upgrade-insecure-requests, fix the URLs anyway: ' . self::summary([...$active, ...$passive]),
+                message: 'HTTP resources are upgraded by CSP upgrade-insecure-requests, fix the URLs anyway: ' . $this->summary([...$active, ...$passive]),
             );
         }
 
         if ($active !== []) {
             return RuleStatus::fail(
                 rule: 'Mixed content',
-                message: 'Loaded or submitted over HTTP: ' . self::summary([...$active, ...$passive]),
+                message: 'Loaded or submitted over HTTP: ' . $this->summary([...$active, ...$passive]),
             );
         }
 
         return RuleStatus::warning(
             rule: 'Mixed content',
-            message: 'Passive content loaded over HTTP: ' . self::summary($passive),
+            message: 'Passive content loaded over HTTP: ' . $this->summary($passive),
         );
     }
 
@@ -97,7 +97,7 @@ final class MixedContentRule implements RuleInterface
      * @param array<string, string> $queries XPath => label
      * @return array<string, list<string>> label => insecure URLs
      */
-    private static function findInsecure(DOMXPath $xpath, array $queries): array
+    private function findInsecure(DOMXPath $xpath, array $queries): array
     {
         $found = [];
 
@@ -117,7 +117,7 @@ final class MixedContentRule implements RuleInterface
     /**
      * @param array<string, list<string>> $found
      */
-    private static function summary(array $found): string
+    private function summary(array $found): string
     {
         $parts = [];
 

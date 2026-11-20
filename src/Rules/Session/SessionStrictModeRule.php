@@ -2,6 +2,7 @@
 
 namespace LukasHron\SentinelProbe\Rules\Session;
 
+use LukasHron\SentinelProbe\Http\SetCookie;
 use LukasHron\SentinelProbe\Http\HttpResponse;
 use LukasHron\SentinelProbe\Http\HttpResponseInterface;
 use LukasHron\SentinelProbe\Rules\Attribute\Rule;
@@ -60,7 +61,7 @@ final readonly class SessionStrictModeRule implements RuleInterface
 
         $issued = $probe->cookie($name);
 
-        if ($issued === null || $issued->isDeletion()) {
+        if (!$issued instanceof SetCookie || $issued->isDeletion()) {
             return RuleStatus::warning(
                 rule: 'Session strict mode',
                 message: sprintf('%s: server did not replace an uninitialized session ID, strict mode is probably disabled (session.use_strict_mode)', $name),

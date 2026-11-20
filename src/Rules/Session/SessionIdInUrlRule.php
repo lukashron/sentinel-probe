@@ -30,10 +30,10 @@ final class SessionIdInUrlRule implements RuleInterface
     {
         $names = array_unique([
             ...self::DEFAULT_NAMES,
-            ...array_map(static fn(SetCookie $cookie) => $cookie->name, $response->sessionCookies()),
+            ...array_map(static fn(SetCookie $cookie): string => $cookie->name, $response->sessionCookies()),
         ]);
 
-        $alternatives = implode('|', array_map(static fn(string $name) => preg_quote($name, '~'), $names));
+        $alternatives = implode('|', array_map(static fn(string $name): string => preg_quote($name, '~'), $names));
 
         $inQuery = '~[?&;](?:' . $alternatives . ')=[^&\s"\'<>#]+~i';
         $inForm = '~<input[^>]+name\s*=\s*["\']?(?:' . $alternatives . ')["\'\s/>]~i';

@@ -58,7 +58,7 @@ final class TlsCertificateRule implements RuleInterface
         $protocol = stream_get_meta_data($stream)['crypto']['protocol'] ?? 'unknown protocol';
         fclose($stream);
 
-        $info = $certificate !== null ? openssl_x509_parse($certificate) : false;
+        $info = $certificate instanceof \OpenSSLCertificate ? openssl_x509_parse($certificate) : false;
 
         if ($info === false || !isset($info['validTo_time_t']) || !is_int($info['validTo_time_t'])) {
             return RuleStatus::warning(

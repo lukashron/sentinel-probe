@@ -29,7 +29,7 @@ final class CookieFlagsRule implements RuleInterface
     {
         $cookies = array_values(array_filter(
             $response->cookies(),
-            static fn(SetCookie $cookie) => !$cookie->isSessionCookie() && !$cookie->isDeletion(),
+            static fn(SetCookie $cookie): bool => !$cookie->isSessionCookie() && !$cookie->isDeletion(),
         ));
 
         if ($cookies === []) {
@@ -86,7 +86,7 @@ final class CookieFlagsRule implements RuleInterface
             );
         }
 
-        $names = implode(', ', array_map(static fn(SetCookie $cookie) => $cookie->name, $cookies));
+        $names = implode(', ', array_map(static fn(SetCookie $cookie): string => $cookie->name, $cookies));
 
         return RuleStatus::ok(
             rule: 'Cookie flags',

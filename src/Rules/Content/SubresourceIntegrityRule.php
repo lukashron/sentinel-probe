@@ -29,7 +29,7 @@ final class SubresourceIntegrityRule implements RuleInterface
         $xpath = $response->xpath();
         $pageHost = $response->host();
 
-        if ($xpath === null || $pageHost === null) {
+        if (!$xpath instanceof \DOMXPath || $pageHost === null) {
             return RuleStatus::ok(
                 rule: 'Subresource Integrity',
                 message: 'Page has no content to check',
@@ -55,7 +55,7 @@ final class SubresourceIntegrityRule implements RuleInterface
         $missingCrossOrigin = [];
 
         foreach ($resources as [$element, $url]) {
-            if (!self::isExternal(trim($url), $pageHost)) {
+            if (!$this->isExternal(trim($url), $pageHost)) {
                 continue;
             }
 
@@ -101,7 +101,7 @@ final class SubresourceIntegrityRule implements RuleInterface
     /**
      * Absolute or protocol-relative URL pointing outside the page's site (subdomains count as the same site).
      */
-    private static function isExternal(string $url, string $pageHost): bool
+    private function isExternal(string $url, string $pageHost): bool
     {
         if (!preg_match('~^(https?:)?//~i', $url)) {
             return false;

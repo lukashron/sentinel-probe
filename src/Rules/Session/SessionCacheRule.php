@@ -11,7 +11,7 @@ use LukasHron\SentinelProbe\Rules\RuleStatus;
     id: 'session.cache',
     name: 'Session cache',
     category: 'Session',
-    description: 'When the page sets a session cookie, checks that Cache-Control prevents shared caches (proxies, CDNs) from storing it. A cached response with Set-Cookie can hand one visitor\'s session or personal data to other visitors.',
+    description: "When the page sets a session cookie, checks that Cache-Control prevents shared caches (proxies, CDNs) from storing it. A cached response with Set-Cookie can hand one visitor's session or personal data to other visitors.",
     remediation: <<<'TXT'
         Cache-Control: no-store
         PHP sends it by default with session.cache_limiter = nocache, do not change it to public.

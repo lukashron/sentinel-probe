@@ -60,7 +60,7 @@ final readonly class DebugOutputRule implements RuleInterface
 
         $notFound = $this->notFoundPage($response);
 
-        if ($notFound !== null) {
+        if ($notFound instanceof HttpResponseInterface) {
             foreach ($this->detect($notFound) as $label) {
                 $findings[] = sprintf('%s on the 404 page', $label);
             }

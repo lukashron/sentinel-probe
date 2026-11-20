@@ -18,7 +18,7 @@ final readonly class SetCookie
     public static function fromHeader(string $header): ?self
     {
         $parts = explode(';', $header);
-        $pair = (string)array_shift($parts);
+        $pair = array_shift($parts);
 
         if (!str_contains($pair, '=')) {
             return null;

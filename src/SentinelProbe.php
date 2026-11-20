@@ -82,7 +82,7 @@ final readonly class SentinelProbe
         );
 
         return array_map(
-            static fn(RuleInterface $rule) => $rule->check($response),
+            static fn(RuleInterface $rule): RuleStatus => $rule->check($response),
             $this->rules()
         );
     }

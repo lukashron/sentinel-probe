@@ -50,7 +50,7 @@ final readonly class CorsRule implements RuleInterface
                 ]),
             ];
 
-            $probes = array_map(static fn($request) => new HttpResponse($request), $requests);
+            $probes = array_map(static fn($request): HttpResponse => new HttpResponse($request), $requests);
         } catch (TransportExceptionInterface $e) {
             return RuleStatus::warning(
                 rule: 'CORS',

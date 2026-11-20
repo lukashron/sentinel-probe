@@ -13,3 +13,6 @@ run:
 
 phpstan:
 	docker compose exec app vendor/bin/phpstan analyse -l 10 src
+
+rector:
+	docker compose exec app vendor/bin/rector

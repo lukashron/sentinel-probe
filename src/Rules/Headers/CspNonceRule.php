@@ -47,7 +47,7 @@ final readonly class CspNonceRule implements RuleInterface
     public function check(HttpResponseInterface $response): RuleStatus
     {
         $policy = $response->header('content-security-policy');
-        $nonces = self::nonces($policy);
+        $nonces = $this->nonces($policy);
 
         if ($policy === null || $nonces === []) {
             return RuleStatus::ok(
@@ -78,7 +78,7 @@ final readonly class CspNonceRule implements RuleInterface
 
         $xpath = $response->xpath();
 
-        if ($xpath !== null) {
+        if ($xpath instanceof \DOMXPath) {
             array_push($warnings, ...$this->checkElements($xpath, $directives, $nonces));
         }
 
@@ -117,7 +117,7 @@ final readonly class CspNonceRule implements RuleInterface
             return false;
         }
 
-        return array_intersect($nonces, self::nonces($probe->header('content-security-policy'))) !== [];
+        return array_intersect($nonces, $this->nonces($probe->header('content-security-policy'))) !== [];
     }
 
     /**
@@ -127,8 +127,8 @@ final readonly class CspNonceRule implements RuleInterface
      */
     private function checkElements(DOMXPath $xpath, array $directives, array $nonces): array
     {
-        $scriptSources = self::sources($directives, 'script-src-elem', 'script-src', 'default-src');
-        $styleSources = self::sources($directives, 'style-src-elem', 'style-src', 'default-src');
+        $scriptSources = $this->sources($directives, 'script-src-elem', 'script-src', 'default-src');
+        $styleSources = $this->sources($directives, 'style-src-elem', 'style-src', 'default-src');
 
         /** @var array<string, int> $missing label => count */
         $missing = [];
@@ -139,13 +139,13 @@ final readonly class CspNonceRule implements RuleInterface
             if ($element instanceof DOMElement && in_array(strtolower(trim($element->getAttribute('type'))), self::SCRIPT_TYPES, true)) {
                 $inline = !$element->hasAttribute('src');
                 $label = $inline ? 'inline <script>' : '<script src>';
-                self::checkElement($element, $label, $inline, true, $scriptSources, $nonces, $missing, $mismatched);
+                $this->checkElement($element, $label, $inline, true, $scriptSources, $nonces, $missing, $mismatched);
             }
         }
 
         foreach ($xpath->query('//style') ?: [] as $element) {
             if ($element instanceof DOMElement) {
-                self::checkElement($element, 'inline <style>', true, false, $styleSources, $nonces, $missing, $mismatched);
+                $this->checkElement($element, 'inline <style>', true, false, $styleSources, $nonces, $missing, $mismatched);
             }
         }
 
@@ -158,40 +158,40 @@ final readonly class CspNonceRule implements RuleInterface
             $as = strtolower(trim($element->getAttribute('as')));
 
             if (in_array('stylesheet', $rel, true)) {
-                self::checkElement($element, '<link rel=stylesheet>', false, false, $styleSources, $nonces, $missing, $mismatched);
+                $this->checkElement($element, '<link rel=stylesheet>', false, false, $styleSources, $nonces, $missing, $mismatched);
             } elseif (in_array('modulepreload', $rel, true)) {
-                self::checkElement($element, '<link rel=modulepreload>', false, true, $scriptSources, $nonces, $missing, $mismatched);
+                $this->checkElement($element, '<link rel=modulepreload>', false, true, $scriptSources, $nonces, $missing, $mismatched);
             } elseif (in_array('preload', $rel, true) && in_array($as, ['script', 'style'], true)) {
                 $isScript = $as === 'script';
-                self::checkElement($element, sprintf('<link rel=preload as=%s>', $as), false, $isScript, $isScript ? $scriptSources : $styleSources, $nonces, $missing, $mismatched);
+                $this->checkElement($element, sprintf('<link rel=preload as=%s>', $as), false, $isScript, $isScript ? $scriptSources : $styleSources, $nonces, $missing, $mismatched);
             }
         }
 
         $warnings = [];
 
         if ($missing !== []) {
-            $warnings[] = 'Missing nonce, blocked by the browser: ' . self::summary($missing);
+            $warnings[] = 'Missing nonce, blocked by the browser: ' . $this->summary($missing);
         }
 
         if ($mismatched !== []) {
-            $warnings[] = 'Nonce does not match the policy: ' . self::summary($mismatched);
+            $warnings[] = 'Nonce does not match the policy: ' . $this->summary($mismatched);
         }
 
         $handlers = $xpath->query('//@*[starts-with(name(), "on")]');
 
-        if ($handlers !== false && $handlers->length > 0 && self::blocksInline(self::sources($directives, 'script-src-attr', 'script-src', 'default-src'))) {
+        if ($handlers !== false && $handlers->length > 0 && $this->blocksInline($this->sources($directives, 'script-src-attr', 'script-src', 'default-src'))) {
             $warnings[] = sprintf('%d inline event handlers (onclick, …) cannot be allowed by a nonce', $handlers->length);
         }
 
         $styles = $xpath->query('//@style');
 
-        if ($styles !== false && $styles->length > 0 && self::blocksInline(self::sources($directives, 'style-src-attr', 'style-src', 'default-src'))) {
+        if ($styles !== false && $styles->length > 0 && $this->blocksInline($this->sources($directives, 'style-src-attr', 'style-src', 'default-src'))) {
             $warnings[] = sprintf('%d style attributes cannot be allowed by a nonce', $styles->length);
         }
 
         $links = $xpath->query('//*[@href][starts-with(translate(normalize-space(@href), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "javascript:")]');
 
-        if ($links !== false && $links->length > 0 && self::blocksInline($scriptSources)) {
+        if ($links !== false && $links->length > 0 && $this->blocksInline($scriptSources)) {
             $warnings[] = sprintf('%d javascript: links cannot be allowed by a nonce', $links->length);
         }
 
@@ -203,7 +203,7 @@ final readonly class CspNonceRule implements RuleInterface
      * @param array<string, int> $missing
      * @param array<string, int> $mismatched
      */
-    private static function checkElement(
+    private function checkElement(
         DOMElement $element,
         string $label,
         bool $inline,
@@ -230,8 +230,8 @@ final readonly class CspNonceRule implements RuleInterface
 
         // inline elements may be allowed by a hash, external ones by a host source
         $allowed = $inline
-            ? self::allowedByHash($element->textContent, $sources)
-            : !self::externalNeedsNonce($sources, $isScript);
+            ? $this->allowedByHash($element->textContent, $sources)
+            : !$this->externalNeedsNonce($sources, $isScript);
 
         if (!$allowed) {
             $missing[$label] = ($missing[$label] ?? 0) + 1;
@@ -241,7 +241,7 @@ final readonly class CspNonceRule implements RuleInterface
     /**
      * @return list<string>
      */
-    private static function nonces(?string $policy): array
+    private function nonces(?string $policy): array
     {
         if ($policy === null || preg_match_all("~'nonce-([^']+)'~i", $policy, $matches) === 0) {
             return [];
@@ -253,7 +253,7 @@ final readonly class CspNonceRule implements RuleInterface
     /**
      * @param array<string, string> $directives
      */
-    private static function sources(array $directives, string ...$names): ?string
+    private function sources(array $directives, string ...$names): ?string
     {
         foreach ($names as $name) {
             if (isset($directives[$name])) {
@@ -264,7 +264,7 @@ final readonly class CspNonceRule implements RuleInterface
         return null;
     }
 
-    private static function allowedByHash(string $content, string $sources): bool
+    private function allowedByHash(string $content, string $sources): bool
     {
         preg_match_all("~'(sha256|sha384|sha512)-([^']+)'~i", $sources, $matches, PREG_SET_ORDER);
 
@@ -280,7 +280,7 @@ final readonly class CspNonceRule implements RuleInterface
     /**
      * External elements need a nonce when no host source can allow them.
      */
-    private static function externalNeedsNonce(string $sources, bool $isScript): bool
+    private function externalNeedsNonce(string $sources, bool $isScript): bool
     {
         $lower = strtolower($sources);
 
@@ -304,7 +304,7 @@ final readonly class CspNonceRule implements RuleInterface
      * Inline code (handlers, style attributes, javascript: links) is blocked unless 'unsafe-inline'
      * applies; browsers ignore 'unsafe-inline' when a nonce or hash is present.
      */
-    private static function blocksInline(?string $sources): bool
+    private function blocksInline(?string $sources): bool
     {
         if ($sources === null) {
             return false;
@@ -323,7 +323,7 @@ final readonly class CspNonceRule implements RuleInterface
     /**
      * @param array<string, int> $counts
      */
-    private static function summary(array $counts): string
+    private function summary(array $counts): string
     {
         $parts = [];
 

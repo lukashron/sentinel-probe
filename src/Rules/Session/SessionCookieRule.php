@@ -73,7 +73,7 @@ final class SessionCookieRule implements RuleInterface
             );
         }
 
-        $names = implode(', ', array_map(static fn(SetCookie $cookie) => $cookie->name, $cookies));
+        $names = implode(', ', array_map(static fn(SetCookie $cookie): string => $cookie->name, $cookies));
 
         return RuleStatus::ok(
             rule: 'Session cookie',

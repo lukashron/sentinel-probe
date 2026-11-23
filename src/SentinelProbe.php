@@ -12,6 +12,7 @@ use LukasHron\SentinelProbe\Rules\Headers\ClickjackingRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentSecurityPolicyRule;
 use LukasHron\SentinelProbe\Rules\Headers\ContentTypeOptionsRule;
 use LukasHron\SentinelProbe\Rules\Headers\CorsRule;
+use LukasHron\SentinelProbe\Rules\Headers\CrossOriginIsolationRule;
 use LukasHron\SentinelProbe\Rules\Headers\CspNonceRule;
 use LukasHron\SentinelProbe\Rules\Headers\InformationDisclosureRule;
 use LukasHron\SentinelProbe\Rules\Headers\PermissionsPolicyRule;
@@ -58,6 +59,7 @@ final readonly class SentinelProbe
             new ContentTypeOptionsRule(),
             new ReferrerPolicyRule(),
             new PermissionsPolicyRule(),
+            new CrossOriginIsolationRule(),
             new InformationDisclosureRule(),
             new SessionCookieRule(),
             new CookieFlagsRule(),

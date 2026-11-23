@@ -1,0 +1,45 @@
+name: Static analysis
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, libxml
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - run: vendor/bin/phpstan analyse -l 10 src --no-progress --error-format=github
+
+  rector:
+    name: Rector
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, libxml
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+
+      - run: vendor/bin/rector process --dry-run --no-progress-bar

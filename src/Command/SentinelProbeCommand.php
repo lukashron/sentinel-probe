@@ -7,6 +7,7 @@ use LukasHron\SentinelProbe\SentinelProbe;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatter;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -22,12 +23,17 @@ class SentinelProbeCommand extends Command
         parent::__construct();
     }
 
+    protected function configure(): void
+    {
+        $this->addArgument('url', InputArgument::OPTIONAL, 'URL of the target, asked interactively when omitted');
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
         $io->title('Security Tool');
 
-        $answer = $io->ask('Enter the URL of the target');
+        $answer = $input->getArgument('url') ?? $io->ask('Enter the URL of the target');
         $baseUrl = is_string($answer) ? trim($answer) : '';
 
         if (filter_var($baseUrl, FILTER_VALIDATE_URL) === false || preg_match('~^https?://~i', $baseUrl) !== 1) {

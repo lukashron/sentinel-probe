@@ -20,6 +20,7 @@ A CLI application for easy security testing of web applications.
 |---|---|---|
 | `headers.csp` | CSP | `Content-Security-Policy` header; warns about `'unsafe-inline'`, `'unsafe-eval'` and overly permissive sources. |
 | `headers.csp-nonce` | CSP nonce | Nonces change per request, are unpredictable and present on all scripts/styles; reports inline handlers and `javascript:` links. |
+| `headers.trusted-types` | Trusted Types | CSP enforces `require-trusted-types-for 'script'` against DOM XSS; warns about `'allow-duplicates'` and `*` in `trusted-types`. |
 | `headers.clickjacking` | Clickjacking | The page cannot be framed by other sites (`X-Frame-Options` or CSP `frame-ancestors`). |
 | `headers.content-type-options` | X-Content-Type-Options | `X-Content-Type-Options: nosniff` prevents MIME sniffing. |
 | `headers.referrer-policy` | Referrer-Policy | `Referrer-Policy` limits how much of the URL is sent to other sites. |

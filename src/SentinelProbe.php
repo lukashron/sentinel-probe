@@ -19,6 +19,7 @@ use LukasHron\SentinelProbe\Rules\Headers\CspNonceRule;
 use LukasHron\SentinelProbe\Rules\Headers\InformationDisclosureRule;
 use LukasHron\SentinelProbe\Rules\Headers\PermissionsPolicyRule;
 use LukasHron\SentinelProbe\Rules\Headers\ReferrerPolicyRule;
+use LukasHron\SentinelProbe\Rules\Headers\TrustedTypesRule;
 use LukasHron\SentinelProbe\Rules\Attribute\Rule;
 use LukasHron\SentinelProbe\Rules\RuleInterface;
 use LukasHron\SentinelProbe\Rules\Session\CookieFlagsRule;
@@ -56,6 +57,7 @@ final readonly class SentinelProbe
             new StrictTransportSecurityRule(),
             new ContentSecurityPolicyRule(),
             new CspNonceRule($this->httpClient),
+            new TrustedTypesRule(),
             new ClickjackingRule(),
             new CorsRule($this->httpClient),
             new ContentTypeOptionsRule(),

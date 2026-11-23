@@ -23,6 +23,7 @@ A CLI application for easy security testing of web applications.
 | `headers.trusted-types` | Trusted Types | CSP enforces `require-trusted-types-for 'script'` against DOM XSS; warns about `'allow-duplicates'` and `*` in `trusted-types`. |
 | `headers.clickjacking` | Clickjacking | The page cannot be framed by other sites (`X-Frame-Options` or CSP `frame-ancestors`). |
 | `headers.content-type-options` | X-Content-Type-Options | `X-Content-Type-Options: nosniff` prevents MIME sniffing. |
+| `headers.xss-protection` | X-XSS-Protection | The obsolete `X-XSS-Protection` header is missing or `0`; `1; mode=block` enables the XSS auditor abusable for XS-Leaks, `report=` sends page content away. |
 | `headers.referrer-policy` | Referrer-Policy | `Referrer-Policy` limits how much of the URL is sent to other sites. |
 | `headers.permissions-policy` | Permissions-Policy | `Permissions-Policy` disables unneeded browser features (camera, microphone, geolocation, …). |
 | `headers.cross-origin-isolation` | Cross-Origin policies | `Cross-Origin-Opener-Policy` isolates the page from windows of other sites and `Cross-Origin-Resource-Policy` stops them from loading it as a resource; `Cross-Origin-Embedder-Policy` is reported for information. |

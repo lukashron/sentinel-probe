@@ -16,8 +16,8 @@ use LukasHron\SentinelProbe\Rules\Headers\CspNonceRule;
 use LukasHron\SentinelProbe\Rules\Headers\InformationDisclosureRule;
 use LukasHron\SentinelProbe\Rules\Headers\PermissionsPolicyRule;
 use LukasHron\SentinelProbe\Rules\Headers\ReferrerPolicyRule;
+use LukasHron\SentinelProbe\Rules\Attribute\Rule;
 use LukasHron\SentinelProbe\Rules\RuleInterface;
-use LukasHron\SentinelProbe\Rules\RuleStatus;
 use LukasHron\SentinelProbe\Rules\Session\CookieFlagsRule;
 use LukasHron\SentinelProbe\Rules\Session\SessionCacheRule;
 use LukasHron\SentinelProbe\Rules\Session\SessionCookieRule;
@@ -72,7 +72,7 @@ final readonly class SentinelProbe
     }
 
     /**
-     * @return list<RuleStatus>
+     * @return list<ScanResult>
      * @throws TransportExceptionInterface
      */
     public function scan(string $url): array
@@ -82,8 +82,15 @@ final readonly class SentinelProbe
         );
 
         return array_map(
-            static fn(RuleInterface $rule): RuleStatus => $rule->check($response),
+            static fn(RuleInterface $rule): ScanResult => new ScanResult(self::metadata($rule), $rule->check($response)),
             $this->rules()
         );
+    }
+
+    private static function metadata(RuleInterface $rule): Rule
+    {
+        $attribute = (new \ReflectionClass($rule))->getAttributes(Rule::class)[0] ?? null;
+
+        return $attribute?->newInstance() ?? throw new \LogicException(sprintf('Rule %s has no #[Rule] attribute', $rule::class));
     }
 }

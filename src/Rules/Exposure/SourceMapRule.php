@@ -4,12 +4,12 @@ namespace LukasHron\SentinelProbe\Rules\Exposure;
 
 use DOMXPath;
 use LukasHron\SentinelProbe\Http\HttpResponseInterface;
+use LukasHron\SentinelProbe\Http\PageAssets;
 use LukasHron\SentinelProbe\Rules\Attribute\Rule;
 use LukasHron\SentinelProbe\Rules\RuleInterface;
 use LukasHron\SentinelProbe\Rules\RuleStatus;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Contracts\HttpClient\ResponseInterface;
 
 #[Rule(
     id: 'exposure.source-maps',
@@ -41,16 +41,19 @@ final readonly class SourceMapRule implements RuleInterface
     /** Only the beginning of each map is downloaded, enough to recognize its format. */
     private const int MAX_MAP_BYTES = 8192;
 
+    private PageAssets $pageAssets;
+
     public function __construct(
         private HttpClientInterface $httpClient,
     )
     {
+        $this->pageAssets = new PageAssets($httpClient);
     }
 
     public function check(HttpResponseInterface $response): RuleStatus
     {
         $xpath = $response->xpath();
-        $assets = $xpath instanceof DOMXPath ? $this->assets($xpath, $response->url()) : [];
+        $assets = $xpath instanceof DOMXPath ? $this->pageAssets->scriptsAndStylesheets($xpath, $response->url(), self::MAX_ASSETS) : [];
 
         if ($assets === []) {
             return RuleStatus::ok(
@@ -71,14 +74,14 @@ final readonly class SourceMapRule implements RuleInterface
                 continue;
             }
 
-            $map = $this->resolve($asset, $reference);
+            $map = PageAssets::resolve($asset, $reference);
 
             if ($map !== null) {
                 $maps[$map] = true;
             }
         }
 
-        foreach ($this->download(array_keys($maps), self::MAX_MAP_BYTES) as $map => $content) {
+        foreach ($this->pageAssets->download(array_keys($maps), self::MAX_MAP_BYTES) as $map => $content) {
             if ($this->isSourceMap($content)) {
                 $found[] = $map;
             }
@@ -95,34 +98,6 @@ final readonly class SourceMapRule implements RuleInterface
             rule: 'Source maps',
             message: sprintf('No source maps found for %d scripts and stylesheets', count($assets)),
         );
-    }
-
-    /**
-     * Absolute URLs of same-origin scripts and stylesheets on the page.
-     *
-     * @return list<string>
-     */
-    private function assets(DOMXPath $xpath, string $pageUrl): array
-    {
-        $host = parse_url($pageUrl, PHP_URL_HOST);
-        $assets = [];
-
-        $queries = [
-            '//script[@src]/@src',
-            '//link[contains(concat(" ", normalize-space(@rel), " "), " stylesheet ")]/@href',
-        ];
-
-        foreach ($queries as $query) {
-            foreach ($xpath->query($query) ?: [] as $attribute) {
-                $url = $this->resolve($pageUrl, (string)$attribute->nodeValue);
-
-                if ($url !== null && is_string($host) && strcasecmp((string)parse_url($url, PHP_URL_HOST), $host) === 0) {
-                    $assets[$url] = true;
-                }
-            }
-        }
-
-        return array_slice(array_keys($assets), 0, self::MAX_ASSETS);
     }
 
     /**
@@ -216,63 +191,6 @@ final readonly class SourceMapRule implements RuleInterface
         return is_string($url) && $url !== '' ? $url : null;
     }
 
-    /**
-     * Downloads the beginning of every 200 response concurrently, other responses are skipped.
-     *
-     * @param list<string> $urls
-     * @return array<string, string> URL => beginning of the content
-     */
-    private function download(array $urls, int $maxBytes): array
-    {
-        /** @var list<ResponseInterface> $requests */
-        $requests = [];
-
-        foreach ($urls as $url) {
-            $requests[] = $this->httpClient->request('GET', $url, [
-                'timeout' => 10,
-                'max_redirects' => 0,
-                'user_data' => $url,
-            ]);
-        }
-
-        $contents = [];
-
-        foreach ($this->httpClient->stream($requests) as $request => $chunk) {
-            $url = $request->getInfo('user_data');
-
-            if (!is_string($url)) {
-                $request->cancel();
-                continue;
-            }
-
-            try {
-                if ($chunk->isFirst()) {
-                    if ($request->getStatusCode() !== 200) {
-                        $request->cancel();
-                        continue;
-                    }
-
-                    $contents[$url] = '';
-                }
-
-                if (!isset($contents[$url])) {
-                    continue;
-                }
-
-                $contents[$url] .= $chunk->getContent();
-
-                if (strlen($contents[$url]) >= $maxBytes) {
-                    $request->cancel();
-                }
-            } catch (TransportExceptionInterface) {
-                // unreachable, timed out or canceled: keep what was downloaded so far
-                $request->cancel();
-            }
-        }
-
-        return $contents;
-    }
-
     private function isSourceMap(string $content): bool
     {
         return preg_match('~^\s*(?:\)\]\}\'\s*)?\{~', $content) === 1
@@ -285,68 +203,9 @@ final readonly class SourceMapRule implements RuleInterface
      */
     private function isInlineSourceMap(string $reference): bool
     {
-        $data = explode(',', $reference, 2)[1] ?? '';
-        $decoded = str_contains(strtolower(explode(',', $reference, 2)[0]), ';base64')
-            ? base64_decode($data, true)
-            : rawurldecode($data);
+        [$meta, $data] = array_pad(explode(',', $reference, 2), 2, '');
+        $decoded = str_contains(strtolower($meta), ';base64') ? base64_decode($data, true) : rawurldecode($data);
 
         return is_string($decoded) && str_contains($decoded, '"sources"');
-    }
-
-    /**
-     * Resolves a reference (absolute, protocol-relative, root-relative or relative) against a base URL.
-     */
-    private function resolve(string $base, string $reference): ?string
-    {
-        $reference = explode('#', trim($reference), 2)[0];
-
-        if ($reference === '') {
-            return null;
-        }
-
-        if (preg_match('~^[a-z][a-z0-9+.-]*:~i', $reference) === 1) {
-            return preg_match('~^https?://~i', $reference) === 1 ? $reference : null;
-        }
-
-        $parts = parse_url($base);
-
-        if (!isset($parts['scheme'], $parts['host'])) {
-            return null;
-        }
-
-        if (str_starts_with($reference, '//')) {
-            return $parts['scheme'] . ':' . $reference;
-        }
-
-        $origin = $parts['scheme'] . '://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
-        $basePath = $parts['path'] ?? '/';
-
-        $path = match (true) {
-            str_starts_with($reference, '/') => $reference,
-            str_starts_with($reference, '?') => $basePath . $reference,
-            default => (preg_replace('~/[^/]*$~', '/', $basePath) ?? '/') . $reference,
-        };
-
-        [$path, $query] = array_pad(explode('?', $path, 2), 2, null);
-        $segments = [];
-
-        foreach (explode('/', $path) as $segment) {
-            if ($segment === '.') {
-                continue;
-            }
-
-            if ($segment === '..') {
-                // keep the leading empty segment of the absolute path
-                if (count($segments) > 1) {
-                    array_pop($segments);
-                }
-
-                continue;
-            }
-
-            $segments[] = $segment;
-        }
-
-        return $origin . implode('/', $segments) . ($query !== null ? '?' . $query : '');
     }
 }

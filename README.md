@@ -46,6 +46,7 @@ A CLI application for easy security testing of web applications.
 | `exposure.debug-output` | Debug output | Error messages, stack traces, SQL errors and debug tools on the page and on a 404 page. |
 | `exposure.directory-listing` | Directory listing | Automatically generated directory listings on the target and common directories. |
 | `exposure.source-maps` | Source maps | Same-origin scripts and stylesheets do not expose their source maps (`SourceMap` header, `sourceMappingURL` comment, guessed `file.js.map`, inline maps). |
+| `exposure.js-secrets` | Secrets in JavaScript | The page and same-origin scripts do not contain secret keys (AWS, Stripe, GitHub, Slack, SendGrid, OpenAI, Anthropic, Supabase `service_role`, private keys); found keys are masked. |
 | `exposure.trace-method` | TRACE method | The server does not echo back `TRACE` requests (Cross-Site Tracing). |
 
 ### Content

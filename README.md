@@ -45,6 +45,7 @@ A CLI application for easy security testing of web applications.
 | `exposure.sensitive-files` | Sensitive files | Exposed VCS metadata, `.env`, phpinfo, backups, database dumps, server status pages. |
 | `exposure.debug-output` | Debug output | Error messages, stack traces, SQL errors and debug tools on the page and on a 404 page. |
 | `exposure.directory-listing` | Directory listing | Automatically generated directory listings on the target and common directories. |
+| `exposure.source-maps` | Source maps | Same-origin scripts and stylesheets do not expose their source maps (`SourceMap` header, `sourceMappingURL` comment, guessed `file.js.map`, inline maps). |
 | `exposure.trace-method` | TRACE method | The server does not echo back `TRACE` requests (Cross-Site Tracing). |
 
 ### Content

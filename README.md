@@ -27,6 +27,7 @@ A CLI application for easy security testing of web applications.
 | `headers.referrer-policy` | Referrer-Policy | `Referrer-Policy` limits how much of the URL is sent to other sites. |
 | `headers.permissions-policy` | Permissions-Policy | `Permissions-Policy` disables unneeded browser features (camera, microphone, geolocation, …). |
 | `headers.cross-origin-isolation` | Cross-Origin policies | `Cross-Origin-Opener-Policy` isolates the page from windows of other sites and `Cross-Origin-Resource-Policy` stops them from loading it as a resource; `Cross-Origin-Embedder-Policy` is reported for information. |
+| `headers.reporting` | Reporting | Informative: violation reporting via `Reporting-Endpoints`/`Report-To`, CSP `report-to`/`report-uri` and COOP/COEP `report-to`; notes undefined groups and plain HTTP endpoints. |
 | `headers.cors` | CORS | The server does not allow foreign or `null` origins, especially together with credentials. |
 | `headers.information-disclosure` | Information disclosure | Headers do not reveal the technology stack and versions (`X-Powered-By`, `Server`, …). |
 

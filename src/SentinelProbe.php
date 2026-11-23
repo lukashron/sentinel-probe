@@ -19,6 +19,7 @@ use LukasHron\SentinelProbe\Rules\Headers\CspNonceRule;
 use LukasHron\SentinelProbe\Rules\Headers\InformationDisclosureRule;
 use LukasHron\SentinelProbe\Rules\Headers\PermissionsPolicyRule;
 use LukasHron\SentinelProbe\Rules\Headers\ReferrerPolicyRule;
+use LukasHron\SentinelProbe\Rules\Headers\ReportingRule;
 use LukasHron\SentinelProbe\Rules\Headers\TrustedTypesRule;
 use LukasHron\SentinelProbe\Rules\Headers\XssProtectionRule;
 use LukasHron\SentinelProbe\Rules\Attribute\Rule;
@@ -66,6 +67,7 @@ final readonly class SentinelProbe
             new ReferrerPolicyRule(),
             new PermissionsPolicyRule(),
             new CrossOriginIsolationRule(),
+            new ReportingRule(),
             new InformationDisclosureRule(),
             new SessionCookieRule(),
             new CookieFlagsRule(),

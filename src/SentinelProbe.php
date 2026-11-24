@@ -6,6 +6,7 @@ use LukasHron\SentinelProbe\Http\HttpResponse;
 use LukasHron\SentinelProbe\Rules\Content\SubresourceIntegrityRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DebugOutputRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DirectoryListingRule;
+use LukasHron\SentinelProbe\Rules\Exposure\HydrationDataRule;
 use LukasHron\SentinelProbe\Rules\Exposure\JsSecretsRule;
 use LukasHron\SentinelProbe\Rules\Exposure\SensitiveFilesRule;
 use LukasHron\SentinelProbe\Rules\Exposure\SourceMapRule;
@@ -79,6 +80,7 @@ final readonly class SentinelProbe
             new DirectoryListingRule($this->httpClient),
             new SourceMapRule($this->httpClient),
             new JsSecretsRule($this->httpClient),
+            new HydrationDataRule(),
             new TraceMethodRule($this->httpClient),
         ];
     }

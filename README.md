@@ -50,6 +50,7 @@ A CLI application for easy security testing of web applications.
 | `exposure.directory-listing` | Directory listing | Automatically generated directory listings on the target and common directories. |
 | `exposure.source-maps` | Source maps | Same-origin scripts and stylesheets do not expose their source maps (`SourceMap` header, `sourceMappingURL` comment, guessed `file.js.map`, inline maps). |
 | `exposure.js-secrets` | Secrets in JavaScript | The page and same-origin scripts do not contain secret keys (AWS, Stripe, GitHub, Slack, SendGrid, OpenAI, Anthropic, Supabase `service_role`, private keys); found keys are masked. |
+| `exposure.hydration-data` | Hydration data | Server-rendered state (`__NEXT_DATA__`, `__NUXT__`, Redux/Apollo state, Remix context, Angular TransferState) contains no passwords, hashes, secrets, tokens, database URLs or SSNs; warns about internal URLs and payloads over 200 kB. |
 | `exposure.trace-method` | TRACE method | The server does not echo back `TRACE` requests (Cross-Site Tracing). |
 
 ### Content

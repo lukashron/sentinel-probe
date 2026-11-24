@@ -4,6 +4,7 @@ namespace LukasHron\SentinelProbe;
 
 use LukasHron\SentinelProbe\Http\HttpResponse;
 use LukasHron\SentinelProbe\Rules\Content\SubresourceIntegrityRule;
+use LukasHron\SentinelProbe\Rules\Content\VulnerableLibrariesRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DebugOutputRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DirectoryListingRule;
 use LukasHron\SentinelProbe\Rules\Exposure\HydrationDataRule;
@@ -57,6 +58,7 @@ final readonly class SentinelProbe
             new TlsCertificateRule(),
             new MixedContentRule(),
             new SubresourceIntegrityRule(),
+            new VulnerableLibrariesRule($this->httpClient),
             new StrictTransportSecurityRule(),
             new ContentSecurityPolicyRule(),
             new CspNonceRule($this->httpClient),

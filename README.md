@@ -58,6 +58,7 @@ A CLI application for easy security testing of web applications.
 | ID | Name | What it checks |
 |---|---|---|
 | `content.subresource-integrity` | Subresource Integrity | Cross-origin scripts and stylesheets have `integrity` and `crossorigin` attributes. |
+| `content.vulnerable-libraries` | Vulnerable libraries | Versions of jQuery, jQuery UI, Bootstrap, AngularJS, Lodash, Moment, Handlebars and DOMPurify detected from script URLs and license banners have no known CVEs; unmaintained libraries are a warning. |
 
 ## License
 

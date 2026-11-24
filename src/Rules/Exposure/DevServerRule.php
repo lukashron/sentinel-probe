@@ -134,7 +134,7 @@ final readonly class DevServerRule implements RuleInterface
                     $contents[$path] = '';
                 }
 
-                if (!isset($contents[$path])) {
+                if ($pattern === null || !isset($contents[$path])) {
                     continue;
                 }
 

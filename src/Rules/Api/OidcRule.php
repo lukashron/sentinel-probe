@@ -79,7 +79,7 @@ final readonly class OidcRule implements RuleInterface
         }
 
         if (in_array('password', $grants, true)) {
-            $warnings[] = 'resource owner password grant is offered, clients get the users\' passwords';
+            $warnings[] = "resource owner password grant is offered, clients get the users' passwords";
         }
 
         $pkce = $this->strings($config['code_challenge_methods_supported'] ?? null);

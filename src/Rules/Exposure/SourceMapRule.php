@@ -188,7 +188,7 @@ final readonly class SourceMapRule implements RuleInterface
 
         $url = end($matches[1]);
 
-        return is_string($url) && $url !== '' ? $url : null;
+        return is_string($url) ? $url : null;
     }
 
     private function isSourceMap(string $content): bool

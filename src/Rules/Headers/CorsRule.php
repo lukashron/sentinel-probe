@@ -2,6 +2,7 @@
 
 namespace LukasHron\SentinelProbe\Rules\Headers;
 
+use Symfony\Contracts\HttpClient\ResponseInterface;
 use LukasHron\SentinelProbe\Http\HttpResponse;
 use LukasHron\SentinelProbe\Http\HttpResponseInterface;
 use LukasHron\SentinelProbe\Rules\Attribute\Rule;
@@ -48,7 +49,7 @@ final readonly class CorsRule implements RuleInterface
                 ]);
             }
 
-            $probes = array_map(static fn($request): HttpResponse => new HttpResponse($request), $requests);
+            $probes = array_map(static fn(ResponseInterface $request): HttpResponse => new HttpResponse($request), $requests);
         } catch (TransportExceptionInterface $e) {
             return RuleStatus::warning(
                 rule: 'CORS',

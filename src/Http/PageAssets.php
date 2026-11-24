@@ -135,7 +135,7 @@ final readonly class PageAssets
         [$path, $query] = array_pad(explode('?', $path, 2), 2, null);
         $segments = [];
 
-        foreach (explode('/', $path) as $segment) {
+        foreach (explode('/', $path ?? '') as $segment) {
             if ($segment === '.') {
                 continue;
             }

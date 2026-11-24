@@ -29,8 +29,8 @@ final class TrustedTypesRule implements RuleInterface
     {
         $enforced = array_map(ContentSecurityPolicyRule::parse(...), $response->contentSecurityPolicies());
 
-        if (!self::requiresTrustedTypes($enforced)) {
-            if (self::requiresTrustedTypes(array_map(ContentSecurityPolicyRule::parse(...), $response->reportOnlyContentSecurityPolicies()))) {
+        if (!$this->requiresTrustedTypes($enforced)) {
+            if ($this->requiresTrustedTypes(array_map(ContentSecurityPolicyRule::parse(...), $response->reportOnlyContentSecurityPolicies()))) {
                 return RuleStatus::warning(
                     rule: 'Trusted Types',
                     message: 'Trusted Types are required only in Report-Only mode and are not enforced',
@@ -77,7 +77,7 @@ final class TrustedTypesRule implements RuleInterface
     /**
      * @param list<array<string, string>> $policies
      */
-    private static function requiresTrustedTypes(array $policies): bool
+    private function requiresTrustedTypes(array $policies): bool
     {
         foreach ($policies as $directives) {
             if (preg_match("~(^|\s)'script'(\s|$)~i", $directives['require-trusted-types-for'] ?? '') === 1) {

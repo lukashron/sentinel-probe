@@ -13,12 +13,12 @@ use LukasHron\SentinelProbe\Rules\RuleStatus;
     name: 'Email spoofing',
     category: 'Domain',
     description: 'Checks the SPF and DMARC DNS records of the domain, which stop others from sending e-mails in its name (phishing of your users and partners). SPF must exist only once and end with ~all or -all, DMARC must have the policy quarantine or reject; p=none only monitors. Domains that send no e-mail should publish "v=spf1 -all" and p=reject as well.',
-    remediation: <<<'TXT'
-        example.com.        TXT "v=spf1 include:_spf.your-mail-provider.com -all"
-        _dmarc.example.com. TXT "v=DMARC1; p=reject; rua=mailto:dmarc@example.com"
-        Domain without e-mail: "v=spf1 -all" and "v=DMARC1; p=reject"
-        Start with p=none and rua reports, then move to quarantine and reject.
-        TXT,
+    remediation: <<<'TXT_WRAP'
+    example.com.        TXT "v=spf1 include:_spf.your-mail-provider.com -all"
+    _dmarc.example.com. TXT "v=DMARC1; p=reject; rua=mailto:dmarc@example.com"
+    Domain without e-mail: "v=spf1 -all" and "v=DMARC1; p=reject"
+    Start with p=none and rua reports, then move to quarantine and reject.
+    TXT_WRAP,
     references: [
         'https://www.rfc-editor.org/rfc/rfc7208',
         'https://www.rfc-editor.org/rfc/rfc7489',
@@ -58,7 +58,7 @@ final readonly class EmailSpoofingRule implements RuleInterface
             $warnings[] = sprintf('%s has no SPF record', $domain);
         } elseif (count($spf) > 1) {
             $failures[] = sprintf('%s has %d SPF records, receivers treat it as an error (permerror)', $domain, count($spf));
-        } elseif (preg_match('~\s([+?~-]?)all\b~i', $spf[0], $match) === 1) {
+        } elseif (preg_match('/\s([+?~-]?)all\b/i', $spf[0], $match) === 1) {
             $summary[] = sprintf('SPF %sall', $match[1]);
 
             if ($match[1] === '' || $match[1] === '+') {

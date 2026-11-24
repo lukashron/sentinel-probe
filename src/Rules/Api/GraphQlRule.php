@@ -135,7 +135,7 @@ final readonly class GraphQlRule implements RuleInterface
                     $other->cancel();
                 }
 
-                return (string)$url;
+                return $url;
             }
         }
 

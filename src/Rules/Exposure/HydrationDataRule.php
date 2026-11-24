@@ -120,7 +120,7 @@ final class HydrationDataRule implements RuleInterface
     {
         $xpath = $response->xpath();
 
-        if ($xpath === null) {
+        if (!$xpath instanceof \DOMXPath) {
             return [];
         }
 

@@ -16,12 +16,13 @@ final class DnsResolver
         set_error_handler(static fn(): bool => true);
 
         try {
+            /** @var list<array<string, mixed>>|false $records */
             $records = dns_get_record($name, $type);
         } finally {
             restore_error_handler();
         }
 
-        return is_array($records) ? array_values($records) : [];
+        return is_array($records) ? $records : [];
     }
 
     /**

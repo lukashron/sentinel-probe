@@ -2,6 +2,7 @@
 
 namespace LukasHron\SentinelProbe\Rules\Domain;
 
+use Symfony\Contracts\HttpClient\ResponseInterface;
 use DateTimeImmutable;
 use LukasHron\SentinelProbe\Http\HttpResponse;
 use LukasHron\SentinelProbe\Http\HttpResponseInterface;
@@ -54,7 +55,7 @@ final readonly class SecurityTxtRule implements RuleInterface
                 '/security.txt' => $this->httpClient->request('GET', $origin . '/security.txt', ['timeout' => 10]),
             ];
 
-            $files = array_map(static fn($request): HttpResponse => new HttpResponse($request), $requests);
+            $files = array_map(static fn(ResponseInterface $request): HttpResponse => new HttpResponse($request), $requests);
         } catch (TransportExceptionInterface $e) {
             return RuleStatus::warning(
                 rule: 'security.txt',

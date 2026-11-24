@@ -30,7 +30,7 @@ final class SubresourceIntegrityRule implements RuleInterface
         $pageHost = $response->host();
 
         if (!$xpath instanceof \DOMXPath || $pageHost === null) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Subresource Integrity',
                 message: 'Page has no content to check',
             );
@@ -69,7 +69,7 @@ final class SubresourceIntegrityRule implements RuleInterface
         }
 
         if ($external === 0) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Subresource Integrity',
                 message: 'No scripts or stylesheets are loaded from other domains',
             );

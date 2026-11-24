@@ -2,12 +2,23 @@
 
 namespace LukasHron\SentinelProbe;
 
+use LukasHron\SentinelProbe\Dns\DnsResolver;
 use LukasHron\SentinelProbe\Http\HttpResponse;
+use LukasHron\SentinelProbe\Rules\Api\ApiDocumentationRule;
+use LukasHron\SentinelProbe\Rules\Api\GraphQlRule;
+use LukasHron\SentinelProbe\Rules\Api\HttpMethodsRule;
+use LukasHron\SentinelProbe\Rules\Api\JwtRule;
+use LukasHron\SentinelProbe\Rules\Api\OidcRule;
+use LukasHron\SentinelProbe\Rules\Domain\CaaRule;
+use LukasHron\SentinelProbe\Rules\Domain\EmailSpoofingRule;
+use LukasHron\SentinelProbe\Rules\Domain\SecurityTxtRule;
+use LukasHron\SentinelProbe\Rules\Domain\SubdomainTakeoverRule;
 use LukasHron\SentinelProbe\Rules\Content\SubresourceIntegrityRule;
 use LukasHron\SentinelProbe\Rules\Content\VulnerableLibrariesRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DebugOutputRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DevServerRule;
 use LukasHron\SentinelProbe\Rules\Exposure\DirectoryListingRule;
+use LukasHron\SentinelProbe\Rules\Exposure\FrameworkEndpointsRule;
 use LukasHron\SentinelProbe\Rules\Exposure\HydrationDataRule;
 use LukasHron\SentinelProbe\Rules\Exposure\JsSecretsRule;
 use LukasHron\SentinelProbe\Rules\Exposure\SensitiveFilesRule;
@@ -53,6 +64,8 @@ final readonly class SentinelProbe
      */
     private function rules(): array
     {
+        $dns = new DnsResolver();
+
         return [
             new HttpsRule(),
             new HttpsRedirectRule($this->httpClient),
@@ -85,7 +98,17 @@ final readonly class SentinelProbe
             new SourceMapRule($this->httpClient),
             new JsSecretsRule($this->httpClient),
             new HydrationDataRule(),
+            new FrameworkEndpointsRule($this->httpClient),
             new TraceMethodRule($this->httpClient),
+            new GraphQlRule($this->httpClient),
+            new ApiDocumentationRule($this->httpClient),
+            new JwtRule(),
+            new HttpMethodsRule($this->httpClient),
+            new OidcRule($this->httpClient),
+            new SecurityTxtRule($this->httpClient),
+            new CaaRule($dns),
+            new EmailSpoofingRule($dns),
+            new SubdomainTakeoverRule($dns),
         ];
     }
 

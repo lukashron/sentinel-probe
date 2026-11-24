@@ -66,7 +66,7 @@ final class HydrationDataRule implements RuleInterface
         $payloads = $this->payloads($response);
 
         if ($payloads === []) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Hydration data',
                 message: 'No server-rendered state found on the page',
             );

@@ -12,13 +12,15 @@ use LukasHron\SentinelProbe\Rules\RuleStatus;
     id: 'session.cookie-flags-other',
     name: 'Cookie flags',
     category: 'Session',
-    description: 'Checks the flags of all cookies other than the session cookie. Missing Secure lets the cookie travel over HTTP, missing HttpOnly makes it readable by JavaScript (XSS). SameSite=None without Secure and broken __Secure-/__Host- prefixes make browsers reject the cookie.',
+    description: 'Checks the flags of all cookies other than the session cookie. Missing Secure lets the cookie travel over HTTP, missing HttpOnly makes it readable by JavaScript (XSS). SameSite=None without Secure, Partitioned without Secure and broken __Secure-/__Host- prefixes make browsers reject the cookie. A Domain attribute set to a parent domain shares the cookie with every subdomain, and cross-site (SameSite=None) cookies without Partitioned (CHIPS) are blocked by browsers that block third-party cookies.',
     remediation: <<<'TXT'
         Set-Cookie: name=value; Secure; HttpOnly; SameSite=Lax; Path=/
         Leave out HttpOnly only for cookies that JavaScript really needs to read.
-        __Host- cookies require Secure, Path=/ and no Domain attribute.
+        Leave out Domain unless subdomains really need the cookie; __Host- cookies require Secure, Path=/ and no Domain attribute.
+        Cookies used in embedded cross-site contexts: Set-Cookie: name=value; Secure; SameSite=None; Partitioned
         TXT,
     references: [
+        'https://developer.mozilla.org/en-US/docs/Web/Privacy/Privacy_sandbox/Partitioned_cookies',
         'https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie',
         'https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies',
     ],
@@ -33,7 +35,7 @@ final class CookieFlagsRule implements RuleInterface
         ));
 
         if ($cookies === []) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Cookie flags',
                 message: 'No other cookies than the session cookie are set',
             );
@@ -41,8 +43,24 @@ final class CookieFlagsRule implements RuleInterface
 
         $failures = [];
         $warnings = [];
+        $notes = [];
+        $host = $response->host();
 
         foreach ($cookies as $cookie) {
+            $domain = $cookie->domain();
+
+            if ($domain !== null && $host !== null && $domain !== $host && str_ends_with($host, '.' . $domain)) {
+                $warnings[] = sprintf('%s: Domain=%s shares the cookie with every subdomain of %s', $cookie->name, $domain, $domain);
+            }
+
+            $partitioned = $cookie->has('partitioned');
+
+            if ($partitioned && !$cookie->has('secure')) {
+                $failures[] = sprintf('%s: Partitioned requires Secure, browsers reject the cookie', $cookie->name);
+            } elseif (!$partitioned && strtolower($cookie->get('samesite') ?? '') === 'none') {
+                $notes[] = sprintf('%s: SameSite=None cookie without Partitioned (CHIPS), browsers blocking third-party cookies will not send it in embedded contexts', $cookie->name);
+            }
+
             $secure = $cookie->has('secure');
             $missing = [];
 
@@ -72,17 +90,19 @@ final class CookieFlagsRule implements RuleInterface
             }
         }
 
+        $suffix = $notes !== [] ? '; note: ' . implode('; ', $notes) : '';
+
         if ($failures !== []) {
             return RuleStatus::fail(
                 rule: 'Cookie flags',
-                message: implode('; ', [...$failures, ...$warnings]),
+                message: implode('; ', [...$failures, ...$warnings]) . $suffix,
             );
         }
 
         if ($warnings !== []) {
             return RuleStatus::warning(
                 rule: 'Cookie flags',
-                message: implode('; ', $warnings),
+                message: implode('; ', $warnings) . $suffix,
             );
         }
 
@@ -90,7 +110,7 @@ final class CookieFlagsRule implements RuleInterface
 
         return RuleStatus::ok(
             rule: 'Cookie flags',
-            message: sprintf('%s: Secure, HttpOnly', $names),
+            message: sprintf('%s: Secure, HttpOnly', $names) . $suffix,
         );
     }
 }

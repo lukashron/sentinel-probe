@@ -88,7 +88,8 @@ class SentinelProbeCommand extends Command
             $badge = match ($result->status->status) {
                 RuleStatus::OK => '<fg=green>[OK]  </>',
                 RuleStatus::WARNING => '<fg=yellow>[WARN]</>',
-                RuleStatus::FAIL => '<fg=red>[FAIL]</>'
+                RuleStatus::FAIL => '<fg=red>[FAIL]</>',
+                RuleStatus::SKIP => '<fg=gray>[SKIP]</>',
             };
 
             $io->writeln(sprintf(
@@ -100,6 +101,16 @@ class SentinelProbeCommand extends Command
         }
 
         $io->newLine();
+
+        $counts = array_count_values(array_map(static fn(ScanResult $result): string => $result->status->status, $results));
+
+        $io->writeln(sprintf(
+            '%d passed, %d warnings, %d failed, %d skipped',
+            $counts[RuleStatus::OK] ?? 0,
+            $counts[RuleStatus::WARNING] ?? 0,
+            $counts[RuleStatus::FAIL] ?? 0,
+            $counts[RuleStatus::SKIP] ?? 0,
+        ));
 
         if ($failed) {
             $io->error('Security check found problems');

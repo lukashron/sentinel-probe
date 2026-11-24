@@ -15,7 +15,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
     id: 'session.strict-mode',
     name: 'Session strict mode',
     category: 'Session',
-    description: 'Sends a second request with a made-up session ID and checks that the server rejects it and issues a new one. Accepting uninitialized session IDs enables session fixation attacks.',
+    description: 'For native PHP sessions (PHPSESSID, Drupal SESS…) sends a second request with a made-up session ID and checks that the server rejects it and issues a new one. Accepting uninitialized session IDs enables session fixation attacks. Other platforms and frameworks with their own session handling are skipped, the test would be misleading for them.',
     remediation: <<<'TXT'
         ini_set('session.use_strict_mode', 1);
         Also call session_regenerate_id(true) after login.
@@ -35,12 +35,17 @@ final readonly class SessionStrictModeRule implements RuleInterface
 
     public function check(HttpResponseInterface $response): RuleStatus
     {
-        $cookies = $response->sessionCookies();
+        $cookies = array_values(array_filter(
+            $response->sessionCookies(),
+            static fn(SetCookie $cookie): bool => $cookie->isPhpSession(),
+        ));
 
         if ($cookies === []) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Session strict mode',
-                message: 'No session cookie is set on the target page, nothing to verify',
+                message: $response->sessionCookies() === []
+                    ? 'No session cookie is set on the target page, nothing to verify'
+                    : 'The test applies to native PHP sessions only (PHPSESSID), other session cookies are not verified',
             );
         }
 

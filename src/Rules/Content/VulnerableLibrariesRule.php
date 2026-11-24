@@ -47,7 +47,7 @@ final readonly class VulnerableLibrariesRule implements RuleInterface
         $xpath = $response->xpath();
 
         if (!$xpath instanceof DOMXPath) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Vulnerable libraries',
                 message: 'Page has no content to check',
             );

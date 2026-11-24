@@ -27,7 +27,7 @@ final class SessionCacheRule implements RuleInterface
     public function check(HttpResponseInterface $response): RuleStatus
     {
         if ($response->sessionCookies() === []) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Session cache',
                 message: 'No session cookie is set on the target page, nothing to verify',
             );

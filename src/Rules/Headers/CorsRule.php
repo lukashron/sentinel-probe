@@ -14,11 +14,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
     id: 'headers.cors',
     name: 'CORS',
     category: 'Headers',
-    description: 'Sends requests with a foreign Origin header (a made-up domain and "null") and checks whether the server allows it in Access-Control-Allow-Origin. Reflecting any origin together with Access-Control-Allow-Credentials lets any website read responses with the visitor\'s cookies.',
+    description: 'Sends requests with foreign Origin headers and checks whether the server allows them in Access-Control-Allow-Origin: a made-up domain, "null", and bypasses of broken origin validation (the target domain as a prefix of a foreign domain, a foreign domain ending with the target name, and the target over plain http://). Reflecting such an origin together with Access-Control-Allow-Credentials lets the attacker\'s website read responses with the visitor\'s cookies. CORS matters mostly on API endpoints, the target page is tested only.',
     remediation: <<<'TXT'
-        Allow only a fixed list of trusted origins and compare the Origin header against it exactly.
-        Never reflect the Origin header blindly and never allow the "null" origin.
-        Send Access-Control-Allow-Credentials: true only for trusted origins that need it.
+        Allow only a fixed list of trusted origins and compare the Origin header against it exactly (scheme, host and port).
+        Never use prefix, suffix or substring matching or unanchored regular expressions, never reflect the Origin header blindly and never allow "null".
+        Send Access-Control-Allow-Credentials: true only for trusted HTTPS origins that need it.
         TXT,
     references: [
         'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS',
@@ -35,20 +35,18 @@ final readonly class CorsRule implements RuleInterface
 
     public function check(HttpResponseInterface $response): RuleStatus
     {
-        $foreignOrigin = sprintf('https://sentinel-probe-%s.example', bin2hex(random_bytes(4)));
+        $origins = $this->origins($response);
 
         try {
-            // both requests run concurrently, HttpResponse reads them afterwards
-            $requests = [
-                $foreignOrigin => $this->httpClient->request('GET', $response->url(), [
+            // requests run concurrently, HttpResponse reads them afterwards
+            $requests = [];
+
+            foreach (array_keys($origins) as $origin) {
+                $requests[$origin] = $this->httpClient->request('GET', $response->url(), [
                     'timeout' => 10,
-                    'headers' => ['Origin' => $foreignOrigin],
-                ]),
-                'null' => $this->httpClient->request('GET', $response->url(), [
-                    'timeout' => 10,
-                    'headers' => ['Origin' => 'null'],
-                ]),
-            ];
+                    'headers' => ['Origin' => $origin],
+                ]);
+            }
 
             $probes = array_map(static fn($request): HttpResponse => new HttpResponse($request), $requests);
         } catch (TransportExceptionInterface $e) {
@@ -62,17 +60,21 @@ final readonly class CorsRule implements RuleInterface
         $warnings = [];
 
         foreach ($probes as $origin => $probe) {
+            $origin = (string)$origin;
             $allowed = $probe->header('access-control-allow-origin');
             $credentials = strtolower($probe->header('access-control-allow-credentials') ?? '') === 'true';
 
-            if ($allowed !== (string)$origin) {
+            if ($allowed !== $origin) {
                 continue;
             }
 
-            if ($credentials) {
-                $failures[] = sprintf('Origin "%s" is allowed with credentials, any site can read responses with the visitor\'s cookies', $origin);
+            $description = $origins[$origin];
+
+            // a plain HTTP origin of the target itself needs a man-in-the-middle attacker
+            if ($credentials && !str_starts_with($description, 'the target over plain HTTP')) {
+                $failures[] = sprintf('Origin "%s" (%s) is allowed with credentials, that site can read responses with the visitor\'s cookies', $origin, $description);
             } else {
-                $warnings[] = sprintf('Origin "%s" is allowed, the server reflects any origin', $origin);
+                $warnings[] = sprintf('Origin "%s" (%s) is allowed%s', $origin, $description, $credentials ? ' with credentials' : '');
             }
         }
 
@@ -99,7 +101,38 @@ final readonly class CorsRule implements RuleInterface
 
         return RuleStatus::ok(
             rule: 'CORS',
-            message: 'Foreign origins are not allowed',
+            message: sprintf('None of %d foreign origins is allowed', count($origins)),
         );
+    }
+
+    /**
+     * @return array<string, string> origin => description
+     */
+    private function origins(HttpResponseInterface $response): array
+    {
+        $random = bin2hex(random_bytes(4));
+        $origins = [
+            sprintf('https://sentinel-probe-%s.example', $random) => 'a foreign domain, the server reflects any origin',
+            'null' => 'sandboxed iframes and local files',
+        ];
+
+        $host = $response->host();
+
+        if ($host === null) {
+            return $origins;
+        }
+
+        $site = (string)preg_replace('~^www\.~', '', $host);
+        $port = parse_url($response->url(), PHP_URL_PORT);
+        $port = is_int($port) ? ':' . $port : '';
+
+        $origins[sprintf('https://%s.sentinel-probe-%s.example', $site, $random)] = 'the target domain as a prefix, the server checks only the beginning';
+        $origins[sprintf('https://sentinelprobe%s%s', $random, $site)] = 'a foreign domain ending with the target name, the server checks only the end';
+
+        if ($response->isHttps()) {
+            $origins[sprintf('http://%s%s', $host, $port)] = 'the target over plain HTTP, a network attacker can inject scripts into it';
+        }
+
+        return $origins;
     }
 }

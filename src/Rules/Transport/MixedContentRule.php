@@ -55,7 +55,7 @@ final class MixedContentRule implements RuleInterface
         $xpath = $response->xpath();
 
         if (!$xpath instanceof \DOMXPath) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Mixed content',
                 message: 'Page has no content to check',
             );
@@ -71,9 +71,12 @@ final class MixedContentRule implements RuleInterface
             );
         }
 
-        $policy = $response->header('content-security-policy');
+        $upgrades = array_filter(
+            $response->contentSecurityPolicies(),
+            static fn(string $policy): bool => array_key_exists('upgrade-insecure-requests', ContentSecurityPolicyRule::parse($policy)),
+        );
 
-        if ($policy !== null && array_key_exists('upgrade-insecure-requests', ContentSecurityPolicyRule::parse($policy))) {
+        if ($upgrades !== []) {
             return RuleStatus::warning(
                 rule: 'Mixed content',
                 message: 'HTTP resources are upgraded by CSP upgrade-insecure-requests, fix the URLs anyway: ' . $this->summary([...$active, ...$passive]),

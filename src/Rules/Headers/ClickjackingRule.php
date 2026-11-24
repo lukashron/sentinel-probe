@@ -22,21 +22,37 @@ final class ClickjackingRule implements RuleInterface
 {
     public function check(HttpResponseInterface $response): RuleStatus
     {
-        $policy = $response->header('content-security-policy');
-        $frameAncestors = $policy === null ? null : (ContentSecurityPolicyRule::parse($policy)['frame-ancestors'] ?? null);
+        // frame-ancestors works only in headers, all enforced policies must allow the embedding
+        $frameAncestors = [];
 
-        if ($frameAncestors !== null) {
-            if (preg_match('~(^|\s)\*(\s|$)~', $frameAncestors) === 1) {
-                return RuleStatus::fail(
-                    rule: 'Clickjacking',
-                    message: 'CSP frame-ancestors * allows embedding from any site',
-                );
+        foreach ($response->contentSecurityPolicies(true) as $policy) {
+            $value = ContentSecurityPolicyRule::parse($policy)['frame-ancestors'] ?? null;
+
+            if ($value !== null) {
+                $frameAncestors[] = $value;
+            }
+        }
+
+        if ($frameAncestors !== []) {
+            foreach ($frameAncestors as $value) {
+                if (preg_match('~(^|\s)\*(\s|$)~', $value) !== 1) {
+                    return RuleStatus::ok(
+                        rule: 'Clickjacking',
+                        message: sprintf('CSP frame-ancestors %s', $value),
+                    );
+                }
             }
 
-            return RuleStatus::ok(
+            return RuleStatus::fail(
                 rule: 'Clickjacking',
-                message: sprintf('CSP frame-ancestors %s', $frameAncestors),
+                message: 'CSP frame-ancestors * allows embedding from any site',
             );
+        }
+
+        $inMeta = false;
+
+        foreach ($response->contentSecurityPolicies() as $policy) {
+            $inMeta = $inMeta || isset(ContentSecurityPolicyRule::parse($policy)['frame-ancestors']);
         }
 
         $frameOptions = $response->header('x-frame-options');
@@ -44,7 +60,9 @@ final class ClickjackingRule implements RuleInterface
         if ($frameOptions === null) {
             return RuleStatus::fail(
                 rule: 'Clickjacking',
-                message: 'Neither X-Frame-Options nor CSP frame-ancestors is set',
+                message: $inMeta
+                    ? 'CSP frame-ancestors is set only in <meta>, where browsers ignore it, and X-Frame-Options is missing'
+                    : 'Neither X-Frame-Options nor CSP frame-ancestors is set',
             );
         }
 

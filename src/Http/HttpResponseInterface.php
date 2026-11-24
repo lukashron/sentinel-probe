@@ -64,6 +64,22 @@ interface HttpResponseInterface
      */
     public function findHeaders(string $pattern): array;
 
+    /**
+     * Enforced Content-Security-Policy policies. Browsers enforce all of them at once: every header,
+     * every comma-separated policy in a header and every <meta http-equiv="Content-Security-Policy">.
+     *
+     * @param bool $headersOnly leave out <meta> policies (they ignore frame-ancestors, report-uri, report-to and sandbox)
+     * @return list<string>
+     */
+    public function contentSecurityPolicies(bool $headersOnly = false): array;
+
+    /**
+     * Content-Security-Policy-Report-Only policies (browsers do not support Report-Only in <meta>).
+     *
+     * @return list<string>
+     */
+    public function reportOnlyContentSecurityPolicies(): array;
+
     # ====================================
     #   Content
     # ====================================

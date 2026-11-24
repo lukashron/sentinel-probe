@@ -10,8 +10,11 @@ final readonly class RuleStatus
 
     public const string FAIL = 'fail';
 
+    /** The rule does not apply to the target (nothing to verify), it counts neither as passed nor as failed. */
+    public const string SKIP = 'skip';
+
     /**
-     * @param self::OK|self::WARNING|self::FAIL $status
+     * @param self::OK|self::WARNING|self::FAIL|self::SKIP $status
      */
     public function __construct(
         public string $rule,
@@ -34,5 +37,10 @@ final readonly class RuleStatus
     public static function fail(string $rule, string $message = ''): self
     {
         return new self($rule, self::FAIL, $message);
+    }
+
+    public static function skip(string $rule, string $message = ''): self
+    {
+        return new self($rule, self::SKIP, $message);
     }
 }

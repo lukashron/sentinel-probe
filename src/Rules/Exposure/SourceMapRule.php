@@ -56,7 +56,7 @@ final readonly class SourceMapRule implements RuleInterface
         $assets = $xpath instanceof DOMXPath ? $this->pageAssets->scriptsAndStylesheets($xpath, $response->url(), self::MAX_ASSETS) : [];
 
         if ($assets === []) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'Source maps',
                 message: 'Page has no same-origin scripts or stylesheets to check',
             );

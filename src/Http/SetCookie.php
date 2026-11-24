@@ -60,11 +60,38 @@ final readonly class SetCookie
     }
 
     /**
-     * PHPSESSID, JSESSIONID, ASP.NET_SessionId, laravel_session, SESS… (Drupal), sid, connect.sid
+     * Cookies identifying the visitor's session or login:
+     * PHPSESSID, JSESSIONID, ASP.NET_SessionId, laravel_session, SESS… (Drupal), sid, connect.sid, appSession (Auth0),
+     * next-auth.session-token, __Host-auth, token, jwt, access_token, remember_web_… (Laravel), sb-…-auth-token (Supabase),
+     * .AspNetCore.Identity.Application, .ASPXAUTH, wordpress_logged_in_…
+     * CSRF tokens are excluded, JavaScript often has to read them.
      */
     public function isSessionCookie(): bool
     {
-        return preg_match('~sess|^(sid|connect\.sid)$~i', $this->name) === 1;
+        if (preg_match('~csrf|xsrf~i', $this->name) === 1) {
+            return false;
+        }
+
+        return preg_match('~sess|^(sid|connect\.sid)$|auth|token|jwt|^remember|logged_in|^\.aspnetcore\.(identity|cookies)~i', $this->name) === 1;
+    }
+
+    /**
+     * Session of the native PHP session extension (session_start()), which session.use_strict_mode applies to:
+     * PHPSESSID or a Drupal SESS…/SSESS… cookie.
+     */
+    public function isPhpSession(): bool
+    {
+        return preg_match('~^(PHPSESSID|S?SESS[0-9a-f]{32,})$~i', $this->name) === 1;
+    }
+
+    /**
+     * Domain attribute widening the cookie to the domain and all its subdomains.
+     */
+    public function domain(): ?string
+    {
+        $domain = $this->get('domain');
+
+        return $domain === null || $domain === '' ? null : strtolower(ltrim($domain, '.'));
     }
 
     /**

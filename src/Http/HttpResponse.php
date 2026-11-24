@@ -137,6 +137,49 @@ final readonly class HttpResponse implements HttpResponseInterface
         );
     }
 
+    public function contentSecurityPolicies(bool $headersOnly = false): array
+    {
+        $policies = $this->splitPolicies($this->headerValues('content-security-policy'));
+
+        if ($headersOnly || !$this->isHtml()) {
+            return $policies;
+        }
+
+        $xpath = $this->xpath();
+        $query = '//meta[translate(@http-equiv, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "content-security-policy"]/@content';
+        $meta = [];
+
+        foreach ($xpath?->query($query) ?: [] as $attribute) {
+            $meta[] = (string)$attribute->nodeValue;
+        }
+
+        return [...$policies, ...$this->splitPolicies($meta)];
+    }
+
+    public function reportOnlyContentSecurityPolicies(): array
+    {
+        return $this->splitPolicies($this->headerValues('content-security-policy-report-only'));
+    }
+
+    /**
+     * @param list<string> $values
+     * @return list<string>
+     */
+    private function splitPolicies(array $values): array
+    {
+        $policies = [];
+
+        foreach ($values as $value) {
+            foreach (explode(',', $value) as $policy) {
+                if (trim($policy) !== '') {
+                    $policies[] = trim($policy);
+                }
+            }
+        }
+
+        return $policies;
+    }
+
     # ====================================
     #   Content
     # ====================================

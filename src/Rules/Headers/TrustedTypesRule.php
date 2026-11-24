@@ -27,10 +27,10 @@ final class TrustedTypesRule implements RuleInterface
 {
     public function check(HttpResponseInterface $response): RuleStatus
     {
-        $enforced = self::policies($response, 'content-security-policy');
+        $enforced = array_map(ContentSecurityPolicyRule::parse(...), $response->contentSecurityPolicies());
 
         if (!self::requiresTrustedTypes($enforced)) {
-            if (self::requiresTrustedTypes(self::policies($response, 'content-security-policy-report-only'))) {
+            if (self::requiresTrustedTypes(array_map(ContentSecurityPolicyRule::parse(...), $response->reportOnlyContentSecurityPolicies()))) {
                 return RuleStatus::warning(
                     rule: 'Trusted Types',
                     message: 'Trusted Types are required only in Report-Only mode and are not enforced',
@@ -72,26 +72,6 @@ final class TrustedTypesRule implements RuleInterface
             rule: 'Trusted Types',
             message: $message,
         );
-    }
-
-    /**
-     * Every header value may hold several comma-separated policies and the browser enforces all of them.
-     *
-     * @return list<array<string, string>>
-     */
-    private static function policies(HttpResponseInterface $response, string $header): array
-    {
-        $policies = [];
-
-        foreach ($response->headerValues($header) as $value) {
-            foreach (explode(',', $value) as $policy) {
-                if (trim($policy) !== '') {
-                    $policies[] = ContentSecurityPolicyRule::parse($policy);
-                }
-            }
-        }
-
-        return $policies;
     }
 
     /**

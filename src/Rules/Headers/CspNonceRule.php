@@ -46,11 +46,20 @@ final readonly class CspNonceRule implements RuleInterface
 
     public function check(HttpResponseInterface $response): RuleStatus
     {
-        $policy = $response->header('content-security-policy');
+        // the first enforced policy (header or <meta>) that uses nonces
+        $policy = null;
+
+        foreach ($response->contentSecurityPolicies() as $candidate) {
+            if ($this->nonces($candidate) !== []) {
+                $policy = $candidate;
+                break;
+            }
+        }
+
         $nonces = $this->nonces($policy);
 
         if ($policy === null || $nonces === []) {
-            return RuleStatus::ok(
+            return RuleStatus::skip(
                 rule: 'CSP nonce',
                 message: 'CSP does not use nonces, nothing to verify',
             );
@@ -117,7 +126,7 @@ final readonly class CspNonceRule implements RuleInterface
             return false;
         }
 
-        return array_intersect($nonces, $this->nonces($probe->header('content-security-policy'))) !== [];
+        return array_intersect($nonces, $this->nonces(implode(';', $probe->contentSecurityPolicies()))) !== [];
     }
 
     /**

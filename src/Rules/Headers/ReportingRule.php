@@ -27,11 +27,6 @@ use LukasHron\SentinelProbe\Rules\RuleStatus;
 )]
 final class ReportingRule implements RuleInterface
 {
-    private const array CSP_HEADERS = [
-        'content-security-policy' => 'CSP',
-        'content-security-policy-report-only' => 'CSP-Report-Only',
-    ];
-
     private const array POLICY_HEADERS = [
         'cross-origin-opener-policy' => 'COOP',
         'cross-origin-opener-policy-report-only' => 'COOP-Report-Only',
@@ -49,18 +44,22 @@ final class ReportingRule implements RuleInterface
         /** @var list<array{policy: string, url: string}> $reportUris */
         $reportUris = [];
 
-        foreach (self::CSP_HEADERS as $header => $label) {
-            foreach ($response->headerValues($header) as $value) {
-                foreach (explode(',', $value) as $policy) {
-                    $directives = ContentSecurityPolicyRule::parse($policy);
+        // reporting directives are ignored in <meta> policies
+        $cspPolicies = [
+            'CSP' => $response->contentSecurityPolicies(true),
+            'CSP-Report-Only' => $response->reportOnlyContentSecurityPolicies(),
+        ];
 
-                    foreach (preg_split('~\s+~', $directives['report-to'] ?? '', -1, PREG_SPLIT_NO_EMPTY) ?: [] as $group) {
-                        $groups[$group][] = $label;
-                    }
+        foreach ($cspPolicies as $label => $policies) {
+            foreach ($policies as $policy) {
+                $directives = ContentSecurityPolicyRule::parse($policy);
 
-                    foreach (preg_split('~\s+~', $directives['report-uri'] ?? '', -1, PREG_SPLIT_NO_EMPTY) ?: [] as $uri) {
-                        $reportUris[] = ['policy' => $label, 'url' => $uri];
-                    }
+                foreach (preg_split('~\s+~', $directives['report-to'] ?? '', -1, PREG_SPLIT_NO_EMPTY) ?: [] as $group) {
+                    $groups[$group][] = $label;
+                }
+
+                foreach (preg_split('~\s+~', $directives['report-uri'] ?? '', -1, PREG_SPLIT_NO_EMPTY) ?: [] as $uri) {
+                    $reportUris[] = ['policy' => $label, 'url' => $uri];
                 }
             }
         }

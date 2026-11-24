@@ -47,6 +47,7 @@ A CLI application for easy security testing of web applications.
 |---|---|---|
 | `exposure.sensitive-files` | Sensitive files | Exposed VCS metadata, `.env`, phpinfo, backups, database dumps, server status pages. |
 | `exposure.debug-output` | Debug output | Error messages, stack traces, SQL errors and debug tools on the page and on a 404 page. |
+| `exposure.dev-server` | Dev server | No frontend development server runs in production: Vite, webpack-dev-server/HMR, Next.js development mode, React Refresh, `ng serve` (page markers and `/@vite/client`, `/__webpack_hmr`, `/_next/webpack-hmr`). |
 | `exposure.directory-listing` | Directory listing | Automatically generated directory listings on the target and common directories. |
 | `exposure.source-maps` | Source maps | Same-origin scripts and stylesheets do not expose their source maps (`SourceMap` header, `sourceMappingURL` comment, guessed `file.js.map`, inline maps). |
 | `exposure.js-secrets` | Secrets in JavaScript | The page and same-origin scripts do not contain secret keys (AWS, Stripe, GitHub, Slack, SendGrid, OpenAI, Anthropic, Supabase `service_role`, private keys); found keys are masked. |
